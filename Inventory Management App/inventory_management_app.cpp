@@ -1,15 +1,3 @@
-/********GROUP MEMBERS**********
-Dabillah Benjamin  26102827
-
-John Bannerman - 26102839
-
-Mikhail Mubarak - 26102989
-
-Samuel Sarpong Kobby - 26102797
-
-Fawzan Awuni - 26102796 */
-
-
 #include <iostream>
 #include <vector>
 #include <string>
