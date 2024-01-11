@@ -127,30 +127,7 @@ int main()
 
     int choice;
 	
-	//Create User credentials DB
-	/*sqlite3* db;
 	
-	int rc = sqlite3_open("user_credentials.db", &db);
-	if (rc != SQLITE_OK){
-		cerr<"Cannot open the database: "<<sqlite3_errmsg(db)<<endl;
-		return rc;
-	}
-	
-	else{
-	const char* insertDataQuery = "INSERT INTO UserCredentials (Username, Password) VALUES (?,?);";
-	
-	sqlite3_stmt* stmt;
-	rc = sqlite3_prepare_v2(db, insertDataQuery, -1, &stmt, 0);
-	
-	sqlite3_bind_text(stmt, 1, "use1", -1, SQLITE_STATIC);
-	sqlite3_bind_text(stmt, 2, "password1", -1, SQLITE_STATIC);
-	
-	rc = sqlite3_step(stmt);
-	
-	sqlite3_finalize(stmt);
-	const char* createTableQuery = "CREATE TABLE IF NOT EXISTS UserCredentials (ID INTEGER PRIMARY KEY AUTOINCREMENT, Username TEXT NOT NULL, Password TEXT NOT NULL;";
-	
-	}*/
 	
     start(choice, todoList);
 
