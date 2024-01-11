@@ -31,7 +31,7 @@ void start(int choice, vector<Task> &todoList){
         cout << "4. Delete Todo Item\n";
         cout << "5. Clear Todo List\n";
         cout << "6. Exit\n";
-        cout << "7. Enter your choice: \n";
+        cout << "7. Enter your choice: ";
         cin >> choice;
 
         switch (choice)
@@ -69,14 +69,14 @@ void showTodoList(const vector<Task> &todoList)
     cout << "------------------------\n";
     
     for(const auto& task : todoList){
-    	cout<<(task.completed ? "Done\t" : "Pending\t")<<task.description<<
+    	cout<<(task.completed ? "Done\t" : "Pending\t")<<task.description<<endl;
 	}
 	cout << "------------------------\n";
 }
 void addTodoItem(vector<Task> &todoList)
 {
 	Task newTask;
-	cout<<"What are you planning to do?\n";
+	cout<<"\nWhat are you planning to do?\n";
 	cin.ignore();
 	getline(cin, newTask.description);
 	
@@ -108,7 +108,7 @@ void deleteTodoItem(vector<Task> &todoList)
 	cin>>index;
 	
 	if(index >= 0 && index < todoList.size()){
-		todoList.erase(index);
+		todoList.erase(todoList.begin() + index);
 		cout<<"Task removed from Todo List.\n";
 	}
 	else{
@@ -117,9 +117,8 @@ void deleteTodoItem(vector<Task> &todoList)
 }
 void clearTodoList(vector<Task> &todoList)
 {
-	for(int i = 0; i < todoList.size(); i++){
-		todoList.erase(i);
-	}
+	// Use the clear function to remove all task
+	todoList.clear();
 	cout<<"Todo List Cleared.\n";
 }
 int main()
@@ -129,7 +128,7 @@ int main()
     int choice;
 	
 	//Create User credentials DB
-	sqlite3* db;
+	/*sqlite3* db;
 	
 	int rc = sqlite3_open("user_credentials.db", &db);
 	if (rc != SQLITE_OK){
@@ -151,7 +150,7 @@ int main()
 	sqlite3_finalize(stmt);
 	const char* createTableQuery = "CREATE TABLE IF NOT EXISTS UserCredentials (ID INTEGER PRIMARY KEY AUTOINCREMENT, Username TEXT NOT NULL, Password TEXT NOT NULL;";
 	
-	}
+	}*/
 	
     start(choice, todoList);
 
