@@ -2,67 +2,21 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"type": "cppbuild",
-			"label": "Build with GCC 13.2.0",
-			"command": "C:\\mingw64\\bin\\g++.exe",
+			"label": "build",
+			"type": "shell",
+			"command": "g++",
 			"args": [
-				"-fdiagnostics-color=always",
 				"-g",
-				"-std=c++23",
-				"${workspaceFolder}\\*.cpp",
+				"todo_list_app.cpp",
 				"-o",
-				"${fileDirname}\\main.exe"
+				"main",
+				"-Lc:/sqlite-dll-win-x64-3450000",
+				"-lsqlite3"
 			],
-			"options": {
-				"cwd": "${fileDirname}"
-			},
-			"problemMatcher": [
-				"$gcc"
-			],
-			"group": "build",
-			"detail": "compiler: C:\\mingw64\\bin\\g++.exe"
-		},
-		{
-			"type": "cppbuild",
-			"label": "Build with Clang 16.0.6",
-			"command": "C:\\mingw64\\bin\\clang++.exe",
-			"args": [
-				"-fdiagnostics-color=always",
-				"-g",
-				"-std=c++23",
-				"${workspaceFolder}\\*.cpp",
-				"-o",
-				"${fileDirname}\\main.exe"
-			],
-			"options": {
-				"cwd": "${fileDirname}"
-			},
-			"problemMatcher": [
-				"$gcc"
-			],
-			"group": "build",
-			"detail": "compiler: C:\\mingw64\\bin\\clang++.exe"
-		},
-		{
-			"type": "cppbuild",
-			"label": "Build with MSVC",
-			"command": "cl.exe",
-			"args": [
-				"/Zi",
-				"/std:c++latest",
-				"/EHsc",
-				"${workspaceFolder}\\*.cpp",
-				"/Fe:",
-				"${fileDirname}\\main.exe",
-			],
-			"options": {
-				"cwd": "${fileDirname}"
-			},
-			"problemMatcher": [
-				"$msCompile"
-			],
-			"group": "build",
-			"detail": "compiler: cl.exe"
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
 		}
 	]
 }

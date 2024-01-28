@@ -1,5 +1,0 @@
-# Ignore SQLite-related files
-shell.c
-sqlite3.c
-sqlite.h
-sqlite3ext.h
