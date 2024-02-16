@@ -3,6 +3,7 @@
   "C_Cpp_Runner.msvcBatchPath": "",
   "files.associations": {
     "*.js": "javascript",
+    "vector": "cpp",
     "iostream": "cpp"
   },
   "C_Cpp_Runner.cCompilerPath": "gcc",

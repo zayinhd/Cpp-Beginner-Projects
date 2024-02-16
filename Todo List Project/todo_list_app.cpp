@@ -1,5 +1,4 @@
 #include <iostream>
-#include <vector>
 #include <string>
 #include "sqlite3.h"
 
@@ -12,12 +11,12 @@ struct Task
 };
 
 // Function declarations
-void start(int choice, vector<Task> &todoList);
-void showTodoList(const vector<Task> &todoList);
-void addTodoItem(vector<Task> &todoList);
-void completeTodoItem(vector<Task> &todoList);
-void deleteTodoItem(vector<Task> &todoList);
-void clearTodoList(vector<Task> &todoList);
+void start(int choice, sqlite3 *db);
+void showTodoList(sqlite3 *db);
+void addTodoItem(sqlite3 *db);
+void completeTodoItem(sqlite3 *db);
+void deleteTodoItem(sqlite3 *db);
+void clearTodoList(sqlite3 *db);
 void createTables(sqlite3 *db);
 bool authenticateUser(sqlite3 *db, const string &username, const string &password);
 void loginUser(sqlite3 *db, string &username, string &password);
@@ -100,21 +99,34 @@ void loginUser(sqlite3 *db, string &username, string &password)
 // Register New User
 void registerUser(sqlite3 *db, const string &username, const string &password)
 {
-    string insertUserSQL = "INSERT INTO users (username, password) VALUES ('" + username + "', '" + password + "');";
-    char *errorMsg = nullptr;
 
-    if (sqlite3_exec(db, insertUserSQL.c_str(), callback, 0, &errorMsg) != SQLITE_OK)
+    string insertUserSQL = "INSERT INTO users (username, password) VALUES ('" + username + "', '" + password + "');";
+    sqlite3_stmt *stmt;
+
+    if (sqlite3_prepare_v2(db, insertUserSQL.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
     {
-        cerr << "Error registering user. SQL error: " << errorMsg << endl;
-        sqlite3_free(errorMsg);
+        cerr << "Error preparing SQL statement" << endl;
+        return;
+    }
+
+    // Bind parameters
+    sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 1, password.c_str(), -1, SQLITE_STATIC);
+
+    // Execute Statement
+    if (sqlite3_step(stmt) != SQLITE_DONE)
+    {
+        cerr << "Error Registering user. SQL ERROR: " << sqlite3_errmsg(db) << endl;
     }
     else
     {
         cout << "Registration successful!" << endl;
     }
+
+    sqlite3_finalize(stmt);
 }
 
-void start(int choice, vector<Task> &todoList, sqlite3 *db)
+void start(int choice, sqlite3 *db)
 {
     do
     {
@@ -133,19 +145,19 @@ void start(int choice, vector<Task> &todoList, sqlite3 *db)
         switch (choice)
         {
         case 1:
-            showTodoList(todoList);
+            showTodoList(db);
             break;
         case 2:
-            addTodoItem(todoList);
+            addTodoItem(db);
             break;
         case 3:
-            completeTodoItem(todoList);
+            completeTodoItem(db);
             break;
         case 4:
-            deleteTodoItem(todoList);
+            deleteTodoItem(db);
             break;
         case 5:
-            clearTodoList(todoList);
+            clearTodoList(db);
             break;
         case 6:
             cout << "Exiting program...";
@@ -157,20 +169,25 @@ void start(int choice, vector<Task> &todoList, sqlite3 *db)
     } while (choice != 6);
 }
 
-void showTodoList(const vector<Task> &todoList)
+void showTodoList(sqlite3 *db)
 {
     cout << "\n\t\tTodo List\n";
     cout << "------------------------\n";
     cout << "Status\tDescription\n";
     cout << "------------------------\n";
 
-    for (const auto &task : todoList)
+    string query = "SELECT * FROM tasks;";
+    if (sqlite3_exec(db, query.c_str(), callback, 0, 0) != SQLITE_OK)
     {
-        cout << (task.completed ? "Done\t" : "Pending\t") << task.description << endl;
+        cerr << "Error retrieving tasks." << endl;
     }
-    cout << "------------------------\n";
+    // for (const auto &task : todoList)
+    // {
+    //     cout << (task.completed ? "Done\t" : "Pending\t") << task.description << endl;
+    // }
+    // cout << "------------------------\n";
 }
-void addTodoItem(vector<Task> &todoList)
+void addTodoItem(sqlite3 *db)
 {
     Task newTask;
     cout << "\nWhat are you planning to do?\n";
@@ -179,67 +196,136 @@ void addTodoItem(vector<Task> &todoList)
 
     newTask.completed = false;
 
-    todoList.push_back(newTask);
+    string insertTaskSQL = "INSERT INTO tasks (description, completed) VALUES (?,?)";
+    sqlite3_stmt *stmt;
 
-    cout << "New Task added to Todo List.\n";
-}
-void completeTodoItem(vector<Task> &todoList)
-{
-    int index;
-    cout << "Enter the index of the task to mark as Completed : ";
-    cin >> index;
-
-    if (index >= 0 && index < todoList.size())
+    if (sqlite3_prepare_v2(db, insertTaskSQL.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
     {
-        todoList[index].completed = true;
+        cerr << "Error preparing SQL statement" << endl;
+        return;
+    }
+
+    // Bind parameters
+    sqlite3_bind_text(stmt, 1, newTask.description.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 2, newTask.completed);
+
+    // Execute Statement
+    if (sqlite3_step(stmt) != SQLITE_DONE)
+    {
+        cerr << "Error adding task. SQL ERROR: " << sqlite3_errmsg(db) << endl;
+    }
+    else
+    {
+        cout << "New Task added to Todo List.\n";
+    }
+
+    sqlite3_finalize(stmt);
+}
+void completeTodoItem(sqlite3 *db)
+{
+    int taskId;
+    cout << "Enter the index of the task to mark as Completed : ";
+    cin >> taskId;
+
+    string updateTaskSQL = "UPDATE tasks SET completed = 1 WHERE id = ?;";
+    sqlite3_stmt *stmt;
+
+    if (sqlite3_prepare_v2(db, updateTaskSQL.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        cerr << "Error preparing SQL statement" << endl;
+        return;
+    }
+    // Bind parameters
+    sqlite3_bind_int(stmt, 1, taskId);
+
+    // Execute Statement
+    if (sqlite3_step(stmt) != SQLITE_DONE)
+    {
+        cerr << "Error completing task. SQL ERROR: " << sqlite3_errmsg(db) << endl;
+    }
+    else
+    {
         cout << "Task marked as completed.\n";
     }
+
+    sqlite3_finalize(stmt);
+}
+void deleteTodoItem(sqlite3 *db)
+{
+    int taskId;
+    cout << "Enter the index of the task to Delete : ";
+    cin >> taskId;
+
+    string deleteTaskSQL = "DELETE FROM tasks WHERE id = ?;";
+    sqlite3_stmt *stmt;
+
+    if (sqlite3_prepare_v2(db, deleteTaskSQL.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    {
+        cerr << "Error preparing SQL statement" << endl;
+        return;
+    }
+
+    // Bind parameters
+    sqlite3_bind_int(stmt, 1, taskId);
+
+    // Execute Statement
+    if (sqlite3_step(stmt) != SQLITE_DONE)
+    {
+        cerr << "Error deleting task. SQL ERROR: " << sqlite3_errmsg(db) << endl;
+    }
     else
     {
-        cout << "Invalid index.\n";
-    }
-}
-void deleteTodoItem(vector<Task> &todoList)
-{
-    int index;
-    cout << "Enter the index of the task to Delete : ";
-    cin >> index;
-
-    if (index >= 0 && index < todoList.size())
-    {
-        todoList.erase(todoList.begin() + index);
         cout << "Task removed from Todo List.\n";
     }
+
+    sqlite3_finalize(stmt);
+}
+void clearTodoList(sqlite3 *db)
+{
+    string clearTasksSQL = "DELETE FROM tasks;";
+    char *errorMsg = nullptr;
+
+    if (sqlite3_exec(db, clearTasksSQL.c_str(), callback, 0, &errorMsg) != SQLITE_OK)
+    {
+        cerr << "Error clearing tasks. SQL error: " << errorMsg << endl;
+        sqlite3_free(errorMsg);
+    }
     else
     {
-        cout << "Task not found in Todo List.\n";
+        cout << "Todo List Cleared.\n";
     }
 }
-void clearTodoList(vector<Task> &todoList)
-{
-    // Use the clear function to remove all task
-    todoList.clear();
-    cout << "Todo List Cleared.\n";
-}
+
+// Main function
 int main()
 {
     sqlite3 *db;
-    vector<Task> todoList;
     int choice;
-
-    string username = " ";
-    string password = " ";
+    string user;
 
     // Open SQLITE DB
     if (sqlite3_open("todo.db", &db) == SQLITE_OK)
     {
 
         createTables(db);
-        loginUser(db, username, password);
 
-        start(choice, todoList, db);
+        cout << "Are you a user?y/n";
+        cin >> user;
+        string username, password;
+
+        if (user == "y" || user == "Y")
+        {
+            loginUser(db, username, password);
+        }
+        else if (user == "n" || user == "N")
+        {
+            registerUser(db, username, password);
+        }
+
+        start(choice, db);
     }
 
     sqlite3_close(db);
+
     return 0;
 }
