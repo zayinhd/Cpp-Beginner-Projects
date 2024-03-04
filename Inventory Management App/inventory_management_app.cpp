@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include <sqlite3.h>
+#include "sqlite3.h"
 
 using namespace std;
 
@@ -18,6 +18,7 @@ bool authenticateUser(sqlite3 *db, const string &username, const string &passwor
 void loginUser(sqlite3 *db, string &username, string &password);
 void registerUser(sqlite3 *db, const string &username, const string &password);
 
+void start(sqlite3 *db, int choice);
 void displayInventory(sqlite3 *db);
 void addItem(sqlite3 *db);
 void removeItem(sqlite3 *db);
@@ -46,62 +47,33 @@ int main()
 
         createTables(db);
 
-        cout << "Are you a user?y/n";
+        cout << "Are you a user?y/n: ";
         cin >> user_ans;
 
         if (user_ans == "y" || user_ans == "Y")
         {
             loginUser(db, username, password);
+            start(db, choice);
         }
-        else if (user_ans == "n" || user_ans == "n")
+        else if (user_ans == "n" || user_ans == "N")
         {
+            cout << "Enter your username : ";
+            cin >> username;
+            cout << "Enter your password : ";
+            cin >> password;
             registerUser(db, username, password);
+            start(db, choice);
         }
         else
         {
             cout << "You entered an Invalid answer!";
         }
 
-        // Program Menu
-        do
-        {
-            // Display menu
-            cout << "\nInventory Management System\n";
-            cout << "1. Display Inventory\n";
-            cout << "2. Add Item\n";
-            cout << "3. Remove Item\n";
-            cout << "4. Exit\n";
-            cout << "Enter your choice: ";
-            cin >> choice;
+        // Close Db
+        sqlite3_close(db);
 
-            // Process user choice
-            switch (choice)
-            {
-            case 1:
-                displayInventory(db);
-                break;
-            case 2:
-                addItem(db);
-                break;
-            case 3:
-                removeItem(db);
-                break;
-            case 4:
-                clearInventory(db);
-                break;
-            case 5:
-                cout << "Exiting program.\n";
-                break;
-            default:
-                cout << "Invalid choice. Please enter a valid option.\n";
-            }
-        } while (choice != 5);
+        return 0;
     }
-
-    // Close Db
-    sqlite3_close(db);
-
-    return 0;
 }
 
 //********FUNCTIONS
@@ -125,12 +97,31 @@ void createTables(sqlite3 *db)
                                      " id INTEGER PRIMARY KEY AUTOINCREMENT,"
                                      "name TEXT NOT NULL, "
                                      "quantity INTEGER NOT NULL, "
-                                     "price REAL NOT NULL);";
+                                     "price DOUBLE NOT NULL);";
 
     if (sqlite3_exec(db, createInventoryTableSQL.c_str(), callback, 0, 0) != SQLITE_OK)
     {
         cerr << "Error creating Inventory table." << endl;
     }
+}
+
+// Login user with authentication function
+void loginUser(sqlite3 *db, string &username, string &password)
+{
+    cout << "Enter your username: ";
+    cin >> username;
+    cout << "Enter your password: ";
+    cin >> password;
+
+    while (!authenticateUser(db, username, password))
+    {
+        cout << "Login failed. Please try again." << endl;
+        cout << "Enter your username: ";
+        cin >> username;
+        cout << "Enter your password: ";
+        cin >> password;
+    }
+    cout << "Login successful!" << endl;
 }
 
 // Authenticate user
@@ -181,6 +172,44 @@ void registerUser(sqlite3 *db, const string &username, const string &password)
     sqlite3_finalize(stmt);
 }
 
+// Function to start program
+void start(sqlite3 *db, int choice)
+{
+    // Program Menu
+    do
+    {
+        // Display menu
+        cout << "\nInventory Management System\n";
+        cout << "1. Display Inventory\n";
+        cout << "2. Add Item\n";
+        cout << "3. Remove Item\n";
+        cout << "4. Exit\n";
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        // Process user choice
+        switch (choice)
+        {
+        case 1:
+            displayInventory(db);
+            break;
+        case 2:
+            addItem(db);
+            break;
+        case 3:
+            removeItem(db);
+            break;
+        case 4:
+            clearInventory(db);
+            break;
+        case 5:
+            cout << "Exiting program.\n";
+            break;
+        default:
+            cout << "Invalid choice. Please enter a valid option.\n";
+        }
+    } while (choice != 5);
+}
 // Function to display the inventory
 void displayInventory(sqlite3 *db)
 {
@@ -266,12 +295,16 @@ void removeItem(sqlite3 *db)
 
 void clearInventory(sqlite3 *db)
 {
-    string clearInventorySQL = "DELETE FROM inventory WHERE id = ?;";
-    sqlite3_stmt *stmt;
+    string clearInventorySQL = "DELETE FROM inventory;";
+    char *errorMsg = nullptr;
 
-    if (sqlite3_prepare_v2(db, clearInventorySQL.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
+    if (sqlite3_exec(db, clearInventorySQL.c_str(), callback, 0, &errorMsg) != SQLITE_OK)
     {
-        cerr << "Error preparing SQL statement" << endl;
-        return;
+        cerr << "Error clearing tasks. SQL error: " << errorMsg << endl;
+        sqlite3_free(errorMsg);
+    }
+    else
+    {
+        cout << "Todo List Cleared.\n";
     }
 }
